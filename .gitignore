@@ -1,0 +1,12 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.zip
+
+TWOSIDESs.csv
+TWOSIDES_sample.csv
+data/raw/
+static/plots/

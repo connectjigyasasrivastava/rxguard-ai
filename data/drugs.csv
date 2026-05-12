@@ -1,0 +1,94 @@
+id,name,category
+1,Aspirin,Analgesic
+2,Ibuprofen,NSAID
+3,Paracetamol,Analgesic
+4,Metformin,Antidiabetic
+5,Atorvastatin,Statin
+6,Amlodipine,CCB
+7,Lisinopril,ACE Inhibitor
+8,Omeprazole,PPI
+9,Metoprolol,Beta Blocker
+10,Losartan,ARB
+11,Warfarin,Anticoagulant
+12,Clopidogrel,Antiplatelet
+13,Amoxicillin,Antibiotic
+14,Azithromycin,Antibiotic
+15,Ciprofloxacin,Antibiotic
+16,Doxycycline,Antibiotic
+17,Metronidazole,Antibiotic
+18,Fluconazole,Antifungal
+19,Prednisone,Corticosteroid
+20,Prednisolone,Corticosteroid
+21,Dexamethasone,Corticosteroid
+22,Salbutamol,Bronchodilator
+23,Montelukast,Antiasthmatic
+24,Cetirizine,Antihistamine
+25,Loratadine,Antihistamine
+26,Fexofenadine,Antihistamine
+27,Diazepam,Benzodiazepine
+28,Alprazolam,Benzodiazepine
+29,Zolpidem,Sedative
+30,Sertraline,SSRI
+31,Fluoxetine,SSRI
+32,Escitalopram,SSRI
+33,Amitriptyline,TCA
+34,Gabapentin,Anticonvulsant
+35,Pregabalin,Anticonvulsant
+36,Carbamazepine,Anticonvulsant
+37,Phenytoin,Anticonvulsant
+38,Valproate,Anticonvulsant
+39,Levodopa,Antiparkinsonian
+40,Donepezil,Cholinesterase Inhibitor
+41,Insulin,Antidiabetic
+42,Glibenclamide,Antidiabetic
+43,Sitagliptin,Antidiabetic
+44,Empagliflozin,Antidiabetic
+45,Levothyroxine,Thyroid
+46,Hydrochlorothiazide,Diuretic
+47,Furosemide,Diuretic
+48,Spironolactone,Diuretic
+49,Digoxin,Cardiac Glycoside
+50,Amiodarone,Antiarrhythmic
+51,Atenolol,Beta Blocker
+52,Bisoprolol,Beta Blocker
+53,Ramipril,ACE Inhibitor
+54,Valsartan,ARB
+55,Diltiazem,CCB
+56,Verapamil,CCB
+57,Simvastatin,Statin
+58,Rosuvastatin,Statin
+59,Allopurinol,Antigout
+60,Colchicine,Antigout
+61,Naproxen,NSAID
+62,Diclofenac,NSAID
+63,Celecoxib,NSAID
+64,Morphine,Opioid
+65,Tramadol,Opioid
+66,Codeine,Opioid
+67,Ondansetron,Antiemetic
+68,Metoclopramide,Antiemetic
+69,Pantoprazole,PPI
+70,Ranitidine,H2 Blocker
+71,Methotrexate,DMARD
+72,Hydroxychloroquine,DMARD
+73,Azathioprine,Immunosuppressant
+75,Heparin,Anticoagulant
+76,Rivaroxaban,Anticoagulant
+77,Apixaban,Anticoagulant
+78,Dabigatran,Anticoagulant
+79,Erythromycin,Antibiotic
+80,Clarithromycin,Antibiotic
+81,Clindamycin,Antibiotic
+82,Vancomycin,Antibiotic
+83,Acyclovir,Antiviral
+84,Oseltamivir,Antiviral
+85,Finasteride,Hormone
+86,Dutasteride,Hormone
+87,Tamoxifen,Anticancer
+88,Imatinib,Anticancer
+89,Diphenhydramine,Antihistamine
+90,Promethazine,Antihistamine
+91,Adrenaline,Vasopressor
+92,Dopamine,Vasopressor
+93,Nitroglycerin,Nitrate
+94,Isosorbide,Nitrate
