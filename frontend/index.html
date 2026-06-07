@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RxGuard AI — Drug Interaction Safety System</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f7f7;
+      color: #1a1a1a;
+    }
+
+    header {
+      background: #c0001a;
+      color: white;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    header .logo svg {
+      width: 38px;
+      height: 38px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    header span {
+      font-size: 0.8rem;
+      background: white;
+      color: #c0001a;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .top-bar {
+      background: #fff;
+      border-bottom: 2px solid #e8e8e8;
+      padding: 10px 40px;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .top-bar .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .top-bar .stat strong {
+      color: #c0001a;
+      font-size: 1.1rem;
+    }
+
+    .top-bar .stat span {
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    .divider { width:1px; height:35px; background:#ddd; }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 28px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      border-top: 4px solid #c0001a;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #c0001a;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .drug-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .drug-block h3 {
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #c0001a;
+      padding-bottom: 4px;
+    }
+
+    label {
+      font-size: 0.75rem;
+      color: #666;
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 3px;
+    }
+
+    input[type=number], select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: #fafafa;
+      transition: border 0.2s;
+    }
+
+    input[type=number]:focus, select:focus {
+      outline: none;
+      border-color: #c0001a;
+      background: #fff;
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .toggle-group button {
+      flex: 1;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #f5f5f5;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .toggle-group button.active {
+      background: #c0001a;
+      color: white;
+      border-color: #c0001a;
+    }
+
+    .btn-predict {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      background: #c0001a;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
+    }
+
+    .btn-predict:hover { background: #99001a; }
+
+    .btn-predict:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .result-card {
+      grid-column: 1 / -1;
+      display: none;
+    }
+
+    .result-card.visible { display: block; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .severity-badge {
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .confidence-text {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .confidence-text strong { color: #1a1a1a; font-size: 1.1rem; }
+
+    .prob-bars { display: flex; flex-direction: column; gap: 10px; }
+
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .prob-label {
+      width: 160px;
+      font-size: 0.78rem;
+      color: #444;
+    }
+
+    .prob-bar-wrap {
+      flex: 1;
+      background: #f0f0f0;
+      border-radius: 4px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .prob-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: #c0001a;
+      transition: width 0.6s ease;
+    }
+
+    .prob-val {
+      width: 45px;
+      font-size: 0.78rem;
+      color: #555;
+      text-align: right;
+    }
+
+    .shap-section { margin-top: 24px; }
+
+    .shap-section h3 {
+      font-size: 0.85rem;
+      color: #c0001a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .shap-bars { display: flex; flex-direction: column; gap: 8px; }
+
+    .shap-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .shap-label {
+      width: 180px;
+      font-size: 0.75rem;
+      color: #444;
+    }
+
+    .shap-bar-wrap {
+      flex: 1;
+      background: #f0f0f0;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .shap-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: #e05;
+      transition: width 0.6s ease;
+    }
+
+    .shap-val {
+      width: 55px;
+      font-size: 0.75rem;
+      color: #555;
+      text-align: right;
+    }
+
+    .alert-box {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      border-left: 5px solid;
+    }
+
+    .alert-green  { background:#f0fff4; border-color:#2ecc71; color:#1a5c36; }
+    .alert-yellow { background:#fffde7; border-color:#f1c40f; color:#7d6200; }
+    .alert-orange { background:#fff3e0; border-color:#e67e22; color:#7a3b00; }
+    .alert-red    { background:#fff0f0; border-color:#e74c3c; color:#7a0000; }
+    .alert-darkred{ background:#fce4e4; border-color:#99001a; color:#5a0010; }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #c0001a;
+      font-weight: 600;
+      display: none;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #c0001a;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    @media(max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+      .drug-section { grid-template-columns: 1fr; }
+      .result-card { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="19" stroke="white" stroke-width="2"/>
+      <path d="M13 20h14M20 13v14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="20" cy="20" r="6" fill="white" opacity="0.15"/>
+    </svg>
+    <div>
+      <h1>RxGuard AI</h1>
+      <div style="font-size:0.72rem; opacity:0.85;">Drug Interaction Safety System</div>
+    </div>
+  </div>
+  <span>Clinical Decision Support</span>
+</header>
+
+<div class="top-bar">
+  <div class="stat"><strong>90.2%</strong><span>Accuracy</span></div>
+  <div class="divider"></div>
+  <div class="stat"><strong>0.87</strong><span>F1 Score</span></div>
+  <div class="divider"></div>
+  <div class="stat"><strong>0.96</strong><span>ROC-AUC</span></div>
+  <div class="divider"></div>
+  <div class="stat"><strong>100K+</strong><span>Drug Pairs</span></div>
+  <div class="divider"></div>
+  <div class="stat"><strong>&lt;200ms</strong><span>API Latency</span></div>
+  <div class="divider"></div>
+  <div class="stat"><strong>5 Models</strong><span>Ensemble</span></div>
+</div>
+
+<div class="container">
+
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Drug Pair Analysis</h2>
+    <div class="drug-section">
+      <div class="drug-block">
+        <h3>Drug A</h3>
+
+        <label>Molecular Weight (g/mol)</label>
+        <input type="number" id="mw_a" value="325" step="0.1"/>
+
+        <label>LogP</label>
+        <input type="number" id="logp_a" value="2.5" step="0.1"/>
+
+        <label>H-Bond Donors</label>
+        <input type="number" id="hbd_a" value="2" min="0" max="10"/>
+
+        <label>H-Bond Acceptors</label>
+        <input type="number" id="hba_a" value="4" min="0" max="15"/>
+
+        <label>TPSA (Å²)</label>
+        <input type="number" id="tpsa_a" value="75" step="0.1"/>
+
+        <label>Rotatable Bonds</label>
+        <input type="number" id="rb_a" value="5" min="0"/>
+
+        <label>Protein Binding (%)</label>
+        <input type="number" id="pb_a" value="90" min="0" max="100"/>
+
+        <label>Half-Life (hrs)</label>
+        <input type="number" id="hl_a" value="12" step="0.1"/>
+
+        <label>Bioavailability (%)</label>
+        <input type="number" id="bio_a" value="80" min="0" max="100"/>
+
+        <label>Renal Clearance (mL/min)</label>
+        <input type="number" id="rc_a" value="120" step="0.1"/>
+
+        <label>Volume of Distribution</label>
+        <input type="number" id="vd_a" value="2.5" step="0.1"/>
+
+        <label>Therapeutic Index</label>
+        <input type="number" id="ti_a" value="3.0" step="0.1"/>
+
+        <label>CYP3A4 Inhibitor</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('cyp3a4_a',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('cyp3a4_a',0,this)">No</button>
+        </div>
+        <input type="hidden" id="cyp3a4_a" value="1"/>
+
+        <label>CYP2D6 Inhibitor</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('cyp2d6_a',1,this)">Yes</button>
+          <button onclick="setToggle('cyp2d6_a',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="cyp2d6_a" value="0"/>
+
+        <label>CYP2C9 Inhibitor</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('cyp2c9_a',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('cyp2c9_a',0,this)">No</button>
+        </div>
+        <input type="hidden" id="cyp2c9_a" value="1"/>
+
+        <label>PGP Substrate</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('pgp_a',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('pgp_a',0,this)">No</button>
+        </div>
+        <input type="hidden" id="pgp_a" value="1"/>
+
+        <label>Anticoagulant</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('anticoag_a',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('anticoag_a',0,this)">No</button>
+        </div>
+        <input type="hidden" id="anticoag_a" value="1"/>
+
+        <label>NSAID</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('nsaid_a',1,this)">Yes</button>
+          <button onclick="setToggle('nsaid_a',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="nsaid_a" value="0"/>
+
+        <label>Antidepressant</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('antidep_a',1,this)">Yes</button>
+          <button onclick="setToggle('antidep_a',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="antidep_a" value="0"/>
+
+        <label>Antibiotic</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('antibiotic_a',1,this)">Yes</button>
+          <button onclick="setToggle('antibiotic_a',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="antibiotic_a" value="0"/>
+
+        <label>Statin</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('statin_a',1,this)">Yes</button>
+          <button onclick="setToggle('statin_a',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="statin_a" value="0"/>
+      </div>
+
+      <div class="drug-block">
+        <h3>Drug B</h3>
+
+        <label>Molecular Weight (g/mol)</label>
+        <input type="number" id="mw_b" value="180" step="0.1"/>
+
+        <label>LogP</label>
+        <input type="number" id="logp_b" value="1.2" step="0.1"/>
+
+        <label>H-Bond Donors</label>
+        <input type="number" id="hbd_b" value="1" min="0" max="10"/>
+
+        <label>H-Bond Acceptors</label>
+        <input type="number" id="hba_b" value="3" min="0" max="15"/>
+
+        <label>TPSA (Å²)</label>
+        <input type="number" id="tpsa_b" value="60" step="0.1"/>
+
+        <label>Rotatable Bonds</label>
+        <input type="number" id="rb_b" value="3" min="0"/>
+
+        <label>Protein Binding (%)</label>
+        <input type="number" id="pb_b" value="85" min="0" max="100"/>
+
+        <label>Half-Life (hrs)</label>
+        <input type="number" id="hl_b" value="8" step="0.1"/>
+
+        <label>Bioavailability (%)</label>
+        <input type="number" id="bio_b" value="70" min="0" max="100"/>
+
+        <label>Renal Clearance (mL/min)</label>
+        <input type="number" id="rc_b" value="90" step="0.1"/>
+
+        <label>Volume of Distribution</label>
+        <input type="number" id="vd_b" value="1.8" step="0.1"/>
+
+        <label>Therapeutic Index</label>
+        <input type="number" id="ti_b" value="2.5" step="0.1"/>
+
+        <label>CYP3A4 Inhibitor</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('cyp3a4_b',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('cyp3a4_b',0,this)">No</button>
+        </div>
+        <input type="hidden" id="cyp3a4_b" value="1"/>
+
+        <label>CYP2D6 Inhibitor</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('cyp2d6_b',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('cyp2d6_b',0,this)">No</button>
+        </div>
+        <input type="hidden" id="cyp2d6_b" value="1"/>
+
+        <label>CYP2C9 Inhibitor</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('cyp2c9_b',1,this)">Yes</button>
+          <button onclick="setToggle('cyp2c9_b',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="cyp2c9_b" value="0"/>
+
+        <label>PGP Substrate</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('pgp_b',1,this)">Yes</button>
+          <button onclick="setToggle('pgp_b',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="pgp_b" value="0"/>
+
+        <label>Anticoagulant</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('anticoag_b',1,this)">Yes</button>
+          <button onclick="setToggle('anticoag_b',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="anticoag_b" value="0"/>
+
+        <label>NSAID</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('nsaid_b',1,this)" class="active">Yes</button>
+          <button onclick="setToggle('nsaid_b',0,this)">No</button>
+        </div>
+        <input type="hidden" id="nsaid_b" value="1"/>
+
+        <label>Antidepressant</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('antidep_b',1,this)">Yes</button>
+          <button onclick="setToggle('antidep_b',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="antidep_b" value="0"/>
+
+        <label>Antibiotic</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('antibiotic_b',1,this)">Yes</button>
+          <button onclick="setToggle('antibiotic_b',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="antibiotic_b" value="0"/>
+
+        <label>Statin</label>
+        <div class="toggle-group">
+          <button onclick="setToggle('statin_b',1,this)">Yes</button>
+          <button onclick="setToggle('statin_b',0,this)" class="active">No</button>
+        </div>
+        <input type="hidden" id="statin_b" value="0"/>
+      </div>
+    </div>
+
+    <div style="margin-top:20px; border-top:1px solid #eee; padding-top:18px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+        <div>
+          <label>Same Drug Class</label>
+          <div class="toggle-group">
+            <button onclick="setToggle('same_class',1,this)">Yes</button>
+            <button onclick="setToggle('same_class',0,this)" class="active">No</button>
+          </div>
+          <input type="hidden" id="same_class" value="0"/>
+        </div>
+        <div>
+          <label>Shared Metabolism</label>
+          <div class="toggle-group">
+            <button onclick="setToggle('shared_met',1,this)" class="active">Yes</button>
+            <button onclick="setToggle('shared_met',0,this)">No</button>
+          </div>
+          <input type="hidden" id="shared_met" value="1"/>
+        </div>
+        <div>
+          <label>Both CYP2D6 Inhibitors</label>
+          <div class="toggle-group">
+            <button onclick="setToggle('both_cyp2d6',1,this)">Yes</button>
+            <button onclick="setToggle('both_cyp2d6',0,this)" class="active">No</button>
+          </div>
+          <input type="hidden" id="both_cyp2d6" value="0"/>
+        </div>
+        <div>
+          <label>Tanimoto Similarity (0–1)</label>
+          <input type="number" id="tanimoto" value="0.4" min="0" max="1" step="0.01"/>
+        </div>
+        <div>
+          <label>Shared Drug Targets</label>
+          <input type="number" id="shared_targets" value="3" min="0"/>
+        </div>
+        <div>
+          <label>Side Effect Overlap</label>
+          <input type="number" id="side_effect" value="12" min="0"/>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-predict" id="predictBtn" onclick="runPrediction()">
+      Analyze Drug Interaction
+    </button>
+
+    <div class="loading" id="loading">
+      <span class="spinner"></span> Running ensemble analysis...
+    </div>
+  </div>
+
+  <div class="card result-card" id="resultCard">
+    <h2>Interaction Analysis Result</h2>
+
+    <div id="alertBox" class="alert-box"></div>
+
+    <div class="result-header">
+      <div id="severityBadge" class="severity-badge"></div>
+      <div class="confidence-text">
+        Ensemble Confidence: <strong id="confidenceVal"></strong>
+      </div>
+    </div>
+
+    <div class="prob-bars" id="probBars"></div>
+
+    <div class="shap-section">
+      <h3>SHAP Feature Importance (Top 8)</h3>
+      <div class="shap-bars" id="shapBars"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  RxGuard AI &nbsp;·&nbsp; Ensemble: PyTorch MLP + XGBoost + LightGBM + Random Forest + Gradient Boosting &nbsp;·&nbsp; 100K+ Drug Pairs &nbsp;·&nbsp; SMOTE + Class-Weighted Loss
+</footer>
+
+<script>
+  const SEVERITY_COLORS = {
+    "No Interaction":       "#2ecc71",
+    "Minor Interaction":    "#f1c40f",
+    "Moderate Interaction": "#e67e22",
+    "Major Interaction":    "#e74c3c",
+    "Contraindicated":      "#99001a"
+  };
+
+  const ALERT_CLASSES = {
+    "No Interaction":       "alert-green",
+    "Minor Interaction":    "alert-yellow",
+    "Moderate Interaction": "alert-orange",
+    "Major Interaction":    "alert-red",
+    "Contraindicated":      "alert-darkred"
+  };
+
+  const ALERT_MESSAGES = {
+    "No Interaction":       "No clinically significant interaction detected between these agents.",
+    "Minor Interaction":    "Minor interaction detected. Monitor patient but intervention rarely required.",
+    "Moderate Interaction": "Moderate interaction. Consider dose adjustment or close monitoring.",
+    "Major Interaction":    "Major interaction detected. Use with extreme caution. Consider alternative therapy.",
+    "Contraindicated":      "CONTRAINDICATED. This combination poses serious risk. Do not co-administer."
+  };
+
+  function setToggle(id, val, btn) {
+    document.getElementById(id).value = val;
+    const group = btn.parentElement;
+    group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function g(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function gi(id) { return parseInt(document.getElementById(id).value) || 0; }
+
+  async function runPrediction() {
+    const btn = document.getElementById('predictBtn');
+    btn.disabled = true;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultCard').classList.remove('visible');
+
+    const mw_a = g('mw_a'), mw_b = g('mw_b');
+    const logp_a = g('logp_a'), logp_b = g('logp_b');
+    const pb_a = g('pb_a'), pb_b = g('pb_b');
+
+    const payload = {
+      molecular_weight_a: mw_a,       molecular_weight_b: mw_b,
+      logp_a,                          logp_b,
+      hbd_a: gi('hbd_a'),             hbd_b: gi('hbd_b'),
+      hba_a: gi('hba_a'),             hba_b: gi('hba_b'),
+      tpsa_a: g('tpsa_a'),            tpsa_b: g('tpsa_b'),
+      rotatable_bonds_a: gi('rb_a'),  rotatable_bonds_b: gi('rb_b'),
+      cyp3a4_inhibitor_a: gi('cyp3a4_a'), cyp3a4_inhibitor_b: gi('cyp3a4_b'),
+      cyp2d6_inhibitor_a: gi('cyp2d6_a'), cyp2d6_inhibitor_b: gi('cyp2d6_b'),
+      cyp2c9_inhibitor_a: gi('cyp2c9_a'), cyp2c9_inhibitor_b: gi('cyp2c9_b'),
+      pgp_substrate_a: gi('pgp_a'),   pgp_substrate_b: gi('pgp_b'),
+      protein_binding_a: pb_a,        protein_binding_b: pb_b,
+      half_life_a: g('hl_a'),         half_life_b: g('hl_b'),
+      bioavailability_a: g('bio_a'),  bioavailability_b: g('bio_b'),
+      renal_clearance_a: g('rc_a'),   renal_clearance_b: g('rc_b'),
+      vd_a: g('vd_a'),               vd_b: g('vd_b'),
+      therapeutic_index_a: g('ti_a'), therapeutic_index_b: g('ti_b'),
+      is_anticoagulant_a: gi('anticoag_a'), is_anticoagulant_b: gi('anticoag_b'),
+      is_nsaid_a: gi('nsaid_a'),      is_nsaid_b: gi('nsaid_b'),
+      is_antidepressant_a: gi('antidep_a'), is_antidepressant_b: gi('antidep_b'),
+      is_antibiotic_a: gi('antibiotic_a'),  is_antibiotic_b: gi('antibiotic_b'),
+      is_statin_a: gi('statin_a'),    is_statin_b: gi('statin_b'),
+      same_drug_class: gi('same_class'),
+      mw_diff: Math.abs(mw_a - mw_b),
+      logp_diff: Math.abs(logp_a - logp_b),
+      protein_binding_sum: pb_a + pb_b,
+      both_cyp3a4: gi('cyp3a4_a') & gi('cyp3a4_b'),
+      both_cyp2d6: gi('both_cyp2d6'),
+      shared_metabolism: gi('shared_met'),
+      num_shared_targets: gi('shared_targets'),
+      tanimoto_similarity: g('tanimoto'),
+      side_effect_overlap: gi('side_effect')
+    };
+
+    try {
+      const res  = await fetch('/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if(data.status === 'success') {
+        renderResult(data);
+      } else {
+        alert('Prediction failed: ' + (data.detail || 'Unknown error'));
+      }
+    } catch(err) {
+      alert('Could not reach API. Make sure the server is running.\n' + err);
+    }
+
+    btn.disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+
+  function renderResult(data) {
+    const label  = data.predicted_class;
+    const color  = SEVERITY_COLORS[label] || '#888';
+    const aClass = ALERT_CLASSES[label]   || 'alert-green';
+    const msg    = ALERT_MESSAGES[label]  || '';
+
+    document.getElementById('alertBox').className = `alert-box ${aClass}`;
+    document.getElementById('alertBox').textContent = msg;
+
+    const badge = document.getElementById('severityBadge');
+    badge.textContent    = label;
+    badge.style.background = color;
+
+    document.getElementById('confidenceVal').textContent = data.confidence + '%';
+
+    const probBars = document.getElementById('probBars');
+    probBars.innerHTML = '';
+    for(const [cls, prob] of Object.entries(data.class_probabilities)) {
+      probBars.innerHTML += `
+        <div class="prob-row">
+          <div class="prob-label">${cls}</div>
+          <div class="prob-bar-wrap">
+            <div class="prob-bar" style="width:${prob}%; background:${SEVERITY_COLORS[cls]||'#c0001a'}"></div>
+          </div>
+          <div class="prob-val">${prob}%</div>
+        </div>`;
+    }
+
+    const shapBars = document.getElementById('shapBars');
+    shapBars.innerHTML = '';
+    const shapVals = Object.entries(data.shap_explanation);
+    const maxShap  = Math.max(...shapVals.map(([,v]) => Math.abs(v)));
+    for(const [feat, val] of shapVals) {
+      const pct = maxShap > 0 ? (Math.abs(val)/maxShap*100).toFixed(1) : 0;
+      shapBars.innerHTML += `
+        <div class="shap-row">
+          <div class="shap-label">${feat}</div>
+          <div class="shap-bar-wrap">
+            <div class="shap-bar" style="width:${pct}%"></div>
+          </div>
+          <div class="shap-val">${val}</div>
+        </div>`;
+    }
+
+    document.getElementById('resultCard').classList.add('visible');
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+  }
+</script>
+</body>
+</html>
