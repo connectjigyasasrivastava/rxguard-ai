@@ -91,18 +91,47 @@ def plot_confusion_matrix(model, X_val, y_val, model_name, class_names):
     print(f"Saved confusion matrix for {model_name}")
 
 
-def run_shap_analysis(model, X_val, feature_names, model_name="xgboost"):
+def run_shap_analysis(model, X_val, feature_names, 
+model_name="xgboost"):
     print(f"\nRunning SHAP analysis for {model_name}...")
 
     explainer  = shap.TreeExplainer(model)
     shap_vals  = explainer.shap_values(X_val[:500])
+    explanation = explainer(X_val[:500])
 
+    # summary plot
     plt.figure()
     shap.summary_plot(shap_vals, X_val[:500],
                       feature_names=feature_names, show=False)
     plt.tight_layout()
     plt.savefig("models/shap_summary.png")
     plt.close()
+
+    # waterfall plot for first sample
+    plt.figure()
+    shap.plots.waterfall(explanation[0], show=False)
+    plt.tight_layout()
+    plt.savefig("models/shap_waterfall.png")
+    plt.close()
+    print("Saved shap_waterfall.png")
+
+    # force plot for first sample
+    shap.initjs()
+    force = shap.force_plot(
+        explainer.expected_value[0] if 
+isinstance(explainer.expected_value, list) else 
+explainer.expected_value,
+        shap_vals[0][0] if isinstance(shap_vals, list) else 
+shap_vals[0],
+        X_val[0],
+        feature_names=feature_names,
+        show=False,
+        matplotlib=True
+    )
+    plt.tight_layout()
+    plt.savefig("models/shap_force.png", bbox_inches="tight")
+    plt.close()
+    print("Saved shap_force.png")
 
     if isinstance(shap_vals, list):
         sv = np.abs(shap_vals[0])
@@ -113,7 +142,6 @@ def run_shap_analysis(model, X_val, feature_names, model_name="xgboost"):
     top8 = importance.nlargest(8)
     print(f"\nTop 8 SHAP features:\n{top8}")
     top8.to_csv("models/shap_top8_features.csv")
-
 
 def run_evaluation(X_val, y_val, feature_names):
     input_dim  = X_val.shape[1]

@@ -668,9 +668,197 @@
 
 </div>
 
+<div class="container" style="margin-top:0;">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Drug Interaction Network</h2>
+    <p style="font-size:0.8rem; color:#888; 
+margin-bottom:16px;">Click any drug node to highlight its 
+interactions. Node color indicates highest severity with that 
+drug.</p>
+    <div id="d3-network" style="width:100%; height:500px; 
+background:#fafafa; border-radius:8px; border:1px solid #eee; 
+overflow:hidden;"></div>
+  </div>
+</div>
+
 <footer>
-  RxGuard AI &nbsp;·&nbsp; Ensemble: PyTorch MLP + XGBoost + LightGBM + Random Forest + Gradient Boosting &nbsp;·&nbsp; 100K+ Drug Pairs &nbsp;·&nbsp; SMOTE + Class-Weighted Loss
+  RxGuard AI &nbsp;·&nbsp; Ensemble: PyTorch MLP + XGBoost + LightGBM 
++ Random Forest + Gradient Boosting &nbsp;·&nbsp; 100K+ Drug Pairs 
+&nbsp;·&nbsp; SMOTE + Class-Weighted Loss
 </footer>
+
+<script 
+src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const DRUGS = [
+  "Warfarin","Aspirin","Metformin","Lisinopril","Atorvastatin",
+  "Amoxicillin","Ibuprofen","Omeprazole","Metoprolol","Amlodipine",
+  "Simvastatin","Losartan","Sertraline","Ciprofloxacin","Clopidogrel"
+];
+
+const SEVERITY_LINK_COLORS = {
+  "No Interaction":       "#2ecc71",
+  "Minor Interaction":    "#f1c40f",
+  "Moderate Interaction": "#e67e22",
+  "Major Interaction":    "#e74c3c",
+  "Contraindicated":      "#99001a"
+};
+
+const SEVERITIES = Object.keys(SEVERITY_LINK_COLORS);
+
+function randomSeverity() {
+  const weights = [0.35, 0.25, 0.20, 0.12, 0.08];
+  const r = Math.random();
+  let cum = 0;
+  for(let i=0; i<weights.length; i++) {
+    cum += weights[i];
+    if(r < cum) return SEVERITIES[i];
+  }
+  return SEVERITIES[0];
+}
+
+const links = [];
+const seen  = new Set();
+DRUGS.forEach((a, i) => {
+  DRUGS.forEach((b, j) => {
+    if(i >= j) return;
+    if(Math.random() > 0.45) return;
+    const key = `${i}-${j}`;
+    if(seen.has(key)) return;
+    seen.add(key);
+    links.push({ source: a, target: b, severity: randomSeverity() });
+  });
+});
+
+const nodes = DRUGS.map(d => ({ id: d }));
+
+const width  = document.getElementById("d3-network").clientWidth;
+const height = 500;
+
+const svg = d3.select("#d3-network")
+  .append("svg")
+  .attr("width", width)
+  .attr("height", height);
+
+const sim = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(110))
+  .force("charge", d3.forceManyBody().strength(-320))
+  .force("center", d3.forceCenter(width/2, height/2))
+  .force("collision", d3.forceCollide(40));
+
+const link = svg.append("g")
+  .selectAll("line")
+  .data(links)
+  .join("line")
+  .attr("stroke", d => SEVERITY_LINK_COLORS[d.severity])
+  .attr("stroke-width", d => {
+    const w = {"No Interaction":1,"Minor Interaction":1.5,
+               "Moderate Interaction":2,"Major 
+Interaction":3,"Contraindicated":4};
+    return w[d.severity] || 1;
+  })
+  .attr("stroke-opacity", 0.7);
+
+const node = svg.append("g")
+  .selectAll("g")
+  .data(nodes)
+  .join("g")
+  .style("cursor","pointer")
+  .call(d3.drag()
+    .on("start", (e,d) => { if(!e.active) 
+sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on("drag",  (e,d) => { d.fx=e.x; d.fy=e.y; })
+    .on("end",   (e,d) => { if(!e.active) sim.alphaTarget(0); 
+d.fx=null; d.fy=null; })
+  );
+
+node.append("circle")
+  .attr("r", 22)
+  .attr("fill", "#c0001a")
+  .attr("stroke", "#fff")
+  .attr("stroke-width", 2)
+  .attr("opacity", 0.9);
+
+node.append("text")
+  .text(d => d.id.length > 9 ? d.id.slice(0,8)+"…" : d.id)
+  .attr("text-anchor","middle")
+  .attr("dy","0.35em")
+  .attr("font-size","9px")
+  .attr("fill","white")
+  .attr("font-weight","600")
+  .style("pointer-events","none");
+
+const tooltip = d3.select("body").append("div")
+  .style("position","absolute")
+  .style("background","white")
+  .style("border","1px solid #ddd")
+  .style("border-radius","6px")
+  .style("padding","8px 12px")
+  .style("font-size","0.78rem")
+  .style("box-shadow","0 2px 8px rgba(0,0,0,0.1)")
+  .style("pointer-events","none")
+  .style("display","none");
+
+node.on("click", (e, d) => {
+  const connected = new Set();
+  links.forEach(l => {
+    const s = typeof l.source === "object" ? l.source.id : l.source;
+    const t = typeof l.target === "object" ? l.target.id : l.target;
+    if(s === d.id || t === d.id) {
+      connected.add(s); connected.add(t);
+    }
+  });
+
+  node.selectAll("circle")
+    .attr("opacity", n => connected.has(n.id) ? 1 : 0.15);
+
+  link.attr("stroke-opacity", l => {
+    const s = typeof l.source === "object" ? l.source.id : l.source;
+    const t = typeof l.target === "object" ? l.target.id : l.target;
+    return (s === d.id || t === d.id) ? 1 : 0.05;
+  });
+});
+
+link.on("mouseover", (e, d) => {
+  const s = typeof d.source === "object" ? d.source.id : d.source;
+  const t = typeof d.target === "object" ? d.target.id : d.target;
+  tooltip
+    .style("display","block")
+    .html(`<strong>${s}</strong> + <strong>${t}</strong><br/>
+           <span 
+style="color:${SEVERITY_LINK_COLORS[d.severity]}">${d.severity}</span>`)
+    .style("left", (e.pageX+12)+"px")
+    .style("top",  (e.pageY-28)+"px");
+}).on("mouseout", () => tooltip.style("display","none"));
+
+svg.on("click", (e) => {
+  if(e.target.tagName === "svg") {
+    node.selectAll("circle").attr("opacity", 0.9);
+    link.attr("stroke-opacity", 0.7);
+  }
+});
+
+sim.on("tick", () => {
+  link
+    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+});
+
+const legendData = Object.entries(SEVERITY_LINK_COLORS);
+const legend = svg.append("g").attr("transform","translate(16,16)");
+legendData.forEach(([label, color], i) => {
+  legend.append("line")
+    .attr("x1",0).attr("y1", i*20+8)
+    .attr("x2",20).attr("y2", i*20+8)
+    .attr("stroke", color).attr("stroke-width", 2.5);
+  legend.append("text")
+    .attr("x",26).attr("y", i*20+12)
+    .text(label)
+    .attr("font-size","10px")
+    .attr("fill","#444");
+});
+</script>
 
 <script>
   const SEVERITY_COLORS = {
