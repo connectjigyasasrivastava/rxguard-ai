@@ -64,9 +64,9 @@ def get_class_weights(y):
 
 def train_pytorch_model(X_train, y_train, X_val, y_val, input_dim, epochs=30):
     X_tr = torch.FloatTensor(X_train)
-    y_tr = torch.LongTensor(y_train)
+    y_tr = torch.LongTensor(np.array(y_train))
     X_v  = torch.FloatTensor(X_val)
-    y_v  = torch.LongTensor(y_val)
+    y_v  = torch.LongTensor(np.array(y_val))
     
     dataset = TensorDataset(X_tr, y_tr)
     loader  = DataLoader(dataset, batch_size=512, shuffle=True)
